@@ -18,6 +18,7 @@ type Filebeat struct {
 		Running   float64 `json:"running"`
 		Skipped   float64 `json:"skipped"`
 		Started   float64 `json:"started"`
+		Errors    float64 `json:"errors"`
 	} `json:"harvester"`
 
 	Input struct {
@@ -112,6 +113,15 @@ func NewFilebeatCollector(beatInfo *BeatInfo, stats *Stats) prometheus.Collector
 					nil, prometheus.Labels{"harvester": "started"},
 				),
 				eval:    func(stats *Stats) float64 { return stats.Filebeat.Harvester.Started },
+				valType: prometheus.UntypedValue,
+			},
+			{
+				desc: prometheus.NewDesc(
+					prometheus.BuildFQName(beatInfo.Beat, "filebeat", "harvester"),
+					"filebeat.harvester",
+					nil, prometheus.Labels{"harvester": "errors"},
+				),
+				eval:    func(stats *Stats) float64 { return stats.Filebeat.Harvester.Errors },
 				valType: prometheus.UntypedValue,
 			},
 			{
