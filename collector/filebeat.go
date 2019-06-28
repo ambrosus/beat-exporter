@@ -1,6 +1,13 @@
 package collector
 
 import (
+	"bytes"
+	"fmt"
+	"os/exec"
+	"regexp"
+	"strings"
+	"syscall"
+
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -18,7 +25,6 @@ type Filebeat struct {
 		Running   float64 `json:"running"`
 		Skipped   float64 `json:"skipped"`
 		Started   float64 `json:"started"`
-		Errors    float64 `json:"errors"`
 	} `json:"harvester"`
 
 	Input struct {
@@ -35,6 +41,65 @@ type filebeatCollector struct {
 	beatInfo *BeatInfo
 	stats    *Stats
 	metrics  exportedMetrics
+}
+
+var lastError = ""
+var errorCount = float64(0)
+
+func isHarvesterError(r *regexp.Regexp, l string) string {
+	if r.MatchString(l) {
+		return strings.Split(l, "\t")[0]
+	}
+
+	return ""
+}
+
+func getHarvesterErrors(stats *Stats) float64 {
+	var err error
+
+	//fmt.Println("getHarvesterErrors CALL")
+
+	cmd := exec.Command("docker",
+		"logs",
+		"filebeat",
+		"--tail",
+		"100",
+		"--since",
+		lastError,
+	)
+
+	cmd.SysProcAttr = &syscall.SysProcAttr{}
+
+	var o bytes.Buffer
+	var e bytes.Buffer
+
+	cmd.Stdout = &o
+	cmd.Stderr = &e
+
+	r := regexp.MustCompile("(ERROR).*?(harvester).*?(Read line error)")
+
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("getHarvesterErrors ERROR [%v, %s]\n", err, e.String())
+	} else {
+		errStr := strings.Split(e.String(), "\n")
+
+		if len(lastError) > 0 {
+			errStr = errStr[1:]
+		}
+
+		for _, v := range errStr {
+			checkResult := isHarvesterError(r, v)
+
+			if len(checkResult) > 0 {
+				lastError = checkResult
+
+				errorCount = errorCount + 1
+			}
+		}
+	}
+
+	return errorCount
 }
 
 // NewFilebeatCollector constructor
@@ -121,7 +186,7 @@ func NewFilebeatCollector(beatInfo *BeatInfo, stats *Stats) prometheus.Collector
 					"filebeat.harvester",
 					nil, prometheus.Labels{"harvester": "errors"},
 				),
-				eval:    func(stats *Stats) float64 { return stats.Filebeat.Harvester.Errors },
+				eval:    getHarvesterErrors,
 				valType: prometheus.UntypedValue,
 			},
 			{

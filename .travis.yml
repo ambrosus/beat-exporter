@@ -5,7 +5,7 @@ language: go
 go:
   - 1.10.x
 
-go_import_path: github.com/trustpilot/beat-exporter
+go_import_path: github.com/ambrosus/beat-exporter
 
 services:
   - docker
