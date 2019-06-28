@@ -9,7 +9,7 @@ RUN make
 FROM debian
 
 RUN apt update
-RUN apt install -y docker
+RUN apt-get install -y libltdl7
 
 COPY --from=builder /go/src/github.com/ambrosus/beat-exporter/beat-exporter  /bin/beat-exporter
 
