@@ -101,12 +101,12 @@ func getHarvesterErrors(stats *Stats) float64 {
 
 				logName := errSplit[len(errSplit)-1]
 
-				err = os.Remove(logName)
+				err = os.Truncate(logName, 0)
 
 				if err != nil {
-					fmt.Printf("DeleteLog ERROR %v\n", err)
+					fmt.Printf("TruncateLog ERROR %v\n", err)
 				} else {
-					fmt.Printf("DeleteLog DELETED log [%s]\n", logName)
+					fmt.Printf("TruncateLog SUCECSS [%s]\n", logName)
 				}
 			}
 		}
