@@ -104,9 +104,9 @@ func getHarvesterErrors(stats *Stats) float64 {
 				err = os.Remove(logName)
 
 				if err != nil {
-					fmt.Printf("DeleteLog ERROR %v, log [%s]", err, logName)
+					fmt.Printf("DeleteLog ERROR %v\n", err)
 				} else {
-					fmt.Printf("DeleteLog DELETED log [%s]", logName)
+					fmt.Printf("DeleteLog DELETED log [%s]\n", logName)
 				}
 			}
 		}
