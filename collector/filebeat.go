@@ -3,6 +3,7 @@ package collector
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -88,13 +89,25 @@ func getHarvesterErrors(stats *Stats) float64 {
 			errStr = errStr[1:]
 		}
 
-		for _, v := range errStr {
-			checkResult := isHarvesterError(r, v)
+		for _, errLine := range errStr {
+			checkResult := isHarvesterError(r, errLine)
 
 			if len(checkResult) > 0 {
 				lastError = checkResult
 
 				errorCount = errorCount + 1
+
+				errSplit := strings.Split(errLine, " ")
+
+				logName := errSplit[len(errSplit)-1]
+
+				err = os.Truncate(logName, 0)
+
+				if err != nil {
+					fmt.Printf("TruncateLog ERROR %v\n", err)
+				} else {
+					fmt.Printf("TruncateLog SUCECSS [%s]\n", logName)
+				}
 			}
 		}
 	}
